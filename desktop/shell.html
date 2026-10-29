@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Turbo Browser</title>
+  <link rel="stylesheet" href="shell.css">
+</head>
+<body>
+  <header class="chrome">
+    <div class="tabbar">
+      <img src="icon.svg" class="app-icon" alt="Turbo Browser">
+      <div id="tabs" role="tablist" aria-label="Browser tabs"></div>
+      <button id="new-tab" class="icon-button add-tab" title="New tab (Ctrl+T)" aria-label="New tab">+</button>
+      <div class="drag-space"></div>
+      <div class="window-controls">
+        <button id="minimize" aria-label="Minimize">−</button>
+        <button id="maximize" aria-label="Maximize">□</button>
+        <button id="close-window" aria-label="Close window">×</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button id="back" class="icon-button" title="Back (Alt+Left)" aria-label="Back">←</button>
+      <button id="forward" class="icon-button" title="Forward (Alt+Right)" aria-label="Forward">→</button>
+      <button id="reload" class="icon-button" title="Reload (Ctrl+R)" aria-label="Reload">↻</button>
+      <button id="home" class="icon-button home-button" title="New tab page" aria-label="Home">⌂</button>
+      <form id="address-form" class="address-wrap">
+        <span id="site-info" title="New tab" aria-label="Connection information">✦</span>
+        <input id="address" aria-label="Search or enter website address" autocomplete="off" spellcheck="false" placeholder="Search or enter an address">
+        <span id="private-label" hidden>PRIVATE</span>
+        <button type="button" id="bookmark" class="icon-button" title="Bookmark this page (Ctrl+D)" aria-label="Bookmark this page">☆</button>
+      </form>
+      <button id="downloads-button" class="icon-button" title="Downloads (Ctrl+J)" aria-label="Downloads">↓</button>
+      <button id="bookmarks-button" class="icon-button" title="Bookmarks" aria-label="Bookmarks">▤</button>
+      <button id="menu-button" class="icon-button" title="Browser menu" aria-label="Browser menu">☰</button>
+    </div>
+    <div id="load-progress" class="load-progress" hidden></div>
+  </header>
+
+  <main id="newtab" class="newtab">
+    <div class="topline"><span><i class="status-dot"></i> YOUR SPACE ON THE WEB</span><time id="clock"></time></div>
+    <div class="newtab-content">
+      <div class="wordmark"><img src="icon.svg" alt=""><span>turbo<span class="wordmark-dot">.</span></span></div>
+      <p class="eyebrow" id="greeting">A LITTLE CURIOSITY GOES A LONG WAY</p>
+      <h1 id="welcome">Where to next<span>?</span></h1>
+      <p class="intro" id="intro">One address. A whole world to explore.</p>
+      <form id="search-form" class="search-box">
+        <span aria-hidden="true">⌕</span>
+        <input id="search" aria-label="Search the web or enter a URL" autocomplete="off" placeholder="Search the web or enter a URL" spellcheck="false">
+        <button aria-label="Go">↗</button>
+      </form>
+      <div class="search-provider"><span>Search with</span> <select id="engine" aria-label="Search provider"><option value="duckduckgo">DuckDuckGo</option><option value="google">Google</option><option value="bing">Bing</option></select><kbd>Ctrl L</kbd></div>
+      <div id="quicklinks" class="quicklinks" aria-label="Quick access"></div>
+      <div class="saved-heading"><span>YOUR BOOKMARKS</span><button id="all-bookmarks">View all ↗</button></div>
+      <div id="home-bookmarks" class="home-bookmarks"></div>
+    </div>
+    <footer class="newtab-footer"><span>LESS FRICTION. MORE EXPLORING.</span><button id="settings-button">◉ &nbsp; Make it yours</button><span id="engine-version">CHROMIUM POWERED</span></footer>
+  </main>
+
+  <section id="error-page" class="error-page" hidden>
+    <span class="error-symbol">↗</span><p class="eyebrow">LET’S TRY THAT AGAIN</p><h1>This page couldn’t load.</h1>
+    <p id="error-message"></p><div><button id="retry" class="primary">Try again</button><button id="error-home" class="secondary">Back to new tab</button></div>
+  </section>
+
+  <section id="overlay" class="overlay" hidden aria-label="Browser panel">
+    <aside class="panel-nav"><div class="panel-brand"><img src="icon.svg" alt=""> Your browser.</div>
+      <button data-panel="bookmarks">☆ &nbsp; Bookmarks</button><button data-panel="history">↶ &nbsp; History</button><button data-panel="downloads">↓ &nbsp; Downloads</button><button data-panel="settings">⚙ &nbsp; Settings</button>
+      <button id="private-tab" class="private-action">◈ &nbsp; New private tab <kbd>Ctrl Shift N</kbd></button>
+      <p class="panel-version">Turbo Browser <span>0.1.0</span></p>
+    </aside>
+    <div class="panel-main"><div class="panel-top"><span id="panel-eyebrow" class="eyebrow">YOUR COLLECTION</span><button id="close-panel" class="icon-button" aria-label="Close panel">×</button></div><h1 id="panel-title">Bookmarks</h1><p id="panel-description"></p><input id="panel-search" type="search" placeholder="Filter your bookmarks" aria-label="Filter panel items"><div id="panel-content"></div></div>
+  </section>
+
+  <div id="findbar" class="findbar" hidden><input id="find-input" aria-label="Find in page" placeholder="Find in page"><span id="find-count"></span><button id="find-previous" aria-label="Previous match">↑</button><button id="find-next" aria-label="Next match">↓</button><button id="find-close" aria-label="Close find">×</button></div>
+  <div id="toast" role="status" class="toast" hidden></div>
+  <script src="shell.js"></script>
+</body>
+</html>

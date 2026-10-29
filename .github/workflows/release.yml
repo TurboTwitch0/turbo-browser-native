@@ -1,0 +1,68 @@
+name: Release Windows browser
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Verify release version
+        shell: pwsh
+        run: |
+          $releaseVersion = node -p "require('./package.json').version"
+          if ($env:GITHUB_REF_NAME -ne "v$releaseVersion") {
+            throw 'The pushed release tag must match package.json.'
+          }
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check JavaScript syntax
+        run: npm run check
+      - name: Test browser core
+        run: npm test
+      - name: Exercise the embedded Chromium browser
+        run: npm run smoke
+      - name: Package Windows browser
+        run: npm run build:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Write SHA-256 checksums
+        shell: pwsh
+        run: |
+          $releaseArchives = Get-ChildItem -LiteralPath artifacts -Filter 'Turbo-Browser-*-win-x64.zip'
+          if ($releaseArchives.Count -eq 0) { throw 'The Windows ZIP was not produced.' }
+          $releaseChecksums = foreach ($releaseArchive in $releaseArchives) {
+            $releaseHash = Get-FileHash -LiteralPath $releaseArchive.FullName -Algorithm SHA256
+            "$($releaseHash.Hash.ToLowerInvariant())  $($releaseArchive.Name)"
+          }
+          $releaseChecksums | Set-Content -LiteralPath artifacts/SHA256SUMS.txt -Encoding ascii
+      - name: Retain release files
+        uses: actions/upload-artifact@v4
+        with:
+          name: Turbo-Browser-release
+          path: |
+            artifacts/Turbo-Browser-*-win-x64.zip
+            artifacts/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/Turbo-Browser-*-win-x64.zip
+            artifacts/SHA256SUMS.txt
+          body: |
+            Extract the entire Windows x64 ZIP and run Turbo Browser.exe.
+            This initial build is unsigned and does not include an automatic updater.
+            SHA256SUMS.txt contains the checksum for the downloadable archive.

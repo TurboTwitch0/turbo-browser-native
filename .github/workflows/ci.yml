@@ -1,0 +1,39 @@
+name: Check and build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check JavaScript syntax
+        run: npm run check
+      - name: Test browser core
+        run: npm test
+      - name: Exercise the embedded Chromium browser
+        run: npm run smoke
+      - name: Package Windows browser
+        run: npm run build:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Retain Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Turbo-Browser-windows-x64
+          path: artifacts/Turbo-Browser-*-win-x64.zip
+          if-no-files-found: error
