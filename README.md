@@ -83,6 +83,6 @@ For automated checks, set `TURBO_PROFILE_DIR` to an isolated absolute directory.
 
 ## Releases
 
-The CI workflow installs dependencies from the lockfile, checks syntax, runs unit and browser smoke tests, and builds a Windows archive. Pushing a version tag such as `v0.1.0` runs the release workflow, verifies that the tag matches `package.json`, and attaches the Windows ZIP and its SHA-256 checksum to a GitHub release. Release jobs receive repository-content write access; ordinary CI runs use read access only.
+The CI workflow installs dependencies from the lockfile, checks syntax, runs unit and browser smoke tests, and builds a Windows archive. Pushing a version tag such as `v0.1.0` runs the release workflow and verifies that the tag matches `package.json`. Alternatively, run **Release Windows browser** manually from the **Actions** tab with the `main` branch selected; it derives the release tag from `package.json`. Both routes check out the triggering commit, run the checks and build, and attach the Windows ZIP and its SHA-256 checksum to the corresponding GitHub release. Release jobs receive repository-content write access; ordinary CI runs use read access only.
 
 The companion Sites website is a download and documentation page. To browse arbitrary websites, run the desktop application.
