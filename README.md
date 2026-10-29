@@ -2,13 +2,15 @@
 
 A real desktop web browser: websites render inside Turbo Browser's own Chromium-powered tabs. It does not open your searches in Chrome, Edge, or another installed browser, and it does not embed arbitrary websites in an iframe.
 
-**Windows x64 · Version 0.1.0 · MIT license**
+**Windows x64 · Version 0.2.0 · MIT license**
 
 ## Download and run
 
-Download `Turbo-Browser-0.1.0-win-x64.zip` from this repository's [Releases](https://github.com/TurboTwitch0/turbo-browser-native/releases) page. Extract **the entire ZIP** into a folder, then open `Turbo Browser.exe` inside that folder. Keep its accompanying files together. No Node.js installation is required to run a packaged release.
+Download [Turbo-Browser-0.2.0-win-x64.exe](https://github.com/TurboTwitch0/turbo-browser-native/releases/latest/download/Turbo-Browser-0.2.0-win-x64.exe), then open that file. Turbo launches its own Chromium browser window directly. Enter a website address or search to start browsing.
 
-The initial release is unsigned. There is no automatic updater; install a newer release when one becomes available. Do not bypass Windows or browser security warnings to run a download you do not trust.
+There is no ZIP to extract, setup wizard, or administrator installation. The single-file launcher unpacks its bundled browser into a temporary directory automatically; it requires no separate browser or Node.js installation. Your bookmarks, history, settings, and website sessions remain in the app's local user-data directory between launches.
+
+Websites cannot automatically run downloaded programs. After downloading, you open the `.exe` yourself. The build is unsigned and has no automatic updater; download a newer release when one becomes available. Do not bypass Windows or browser security warnings to run a download you do not trust. All releases are available on the [Releases](https://github.com/TurboTwitch0/turbo-browser-native/releases) page.
 
 ## What works
 
@@ -20,7 +22,7 @@ The initial release is unsigned. There is no automatic updater; install a newer 
 - Local preferences, a choice of DuckDuckGo, Google, or Bing for searches, and dark/light appearance.
 - Optional restoration of regular tabs when the app starts.
 
-This first version does not include account sync, a password manager, browser extension installation, or an automatic update service. Some websites restrict sign-in from embedded browsers, and protected streaming services may require DRM components this release does not bundle.
+This version does not include account sync, a password manager, browser extension installation, or an automatic update service. Some websites restrict sign-in from embedded browsers, and protected streaming services may require DRM components this release does not bundle.
 
 ## Keyboard shortcuts
 
@@ -63,7 +65,7 @@ npm run build:win
 
 `check` checks JavaScript syntax. The unit suite covers address interpretation, allowed URL schemes, stored-state validation, and the privileged IPC boundary. The smoke runner opens the actual Electron application with an isolated temporary profile and exercises the embedded browser against a local HTTP fixture. It fails if the engine does not produce a successful result or exits unsuccessfully. It does not use or change your normal browsing profile.
 
-`build:win` produces `artifacts/Turbo-Browser-0.1.0-win-x64.zip`. To produce an unpacked Windows build instead:
+`build:win` produces the single-file portable launcher `artifacts/Turbo-Browser-0.2.0-win-x64.exe`. The Windows `portable` target runs as the current user, silently unpacks the app on launch, and opens it without an installer. To produce an unpacked Windows build for development instead:
 
 ```sh
 npm run build:dir
@@ -83,6 +85,6 @@ For automated checks, set `TURBO_PROFILE_DIR` to an isolated absolute directory.
 
 ## Releases
 
-The CI workflow installs dependencies from the lockfile, checks syntax, runs unit and browser smoke tests, and builds a Windows archive. Pushing a version tag such as `v0.1.0` runs the release workflow and verifies that the tag matches `package.json`. Alternatively, run **Release Windows browser** manually from the **Actions** tab with the `main` branch selected; it derives the release tag from `package.json`. Both routes check out the triggering commit, run the checks and build, and attach the Windows ZIP and its SHA-256 checksum to the corresponding GitHub release. Release jobs receive repository-content write access; ordinary CI runs use read access only.
+The CI workflow installs dependencies from the lockfile, checks syntax, runs unit and browser smoke tests, and builds the single-file Windows executable. Pushing a version tag such as `v0.2.0` runs the release workflow and verifies that the tag matches `package.json`. Alternatively, run **Release Windows browser** manually from the **Actions** tab with the `main` branch selected; it derives the release tag from `package.json`. Both routes check out the triggering commit, run the checks and build, and attach the Windows `.exe` and its SHA-256 checksum to the corresponding GitHub release. Release jobs receive repository-content write access; ordinary CI runs use read access only.
 
 The companion Sites website is a download and documentation page. To browse arbitrary websites, run the desktop application.

@@ -39,18 +39,18 @@ jobs:
         run: npm test
       - name: Exercise the embedded Chromium browser
         run: npm run smoke
-      - name: Package Windows browser
+      - name: Package single-file Windows browser
         run: npm run build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - name: Write SHA-256 checksums
         shell: pwsh
         run: |
-          $releaseArchives = Get-ChildItem -LiteralPath artifacts -Filter 'Turbo-Browser-*-win-x64.zip'
-          if ($releaseArchives.Count -eq 0) { throw 'The Windows ZIP was not produced.' }
-          $releaseChecksums = foreach ($releaseArchive in $releaseArchives) {
-            $releaseHash = Get-FileHash -LiteralPath $releaseArchive.FullName -Algorithm SHA256
-            "$($releaseHash.Hash.ToLowerInvariant())  $($releaseArchive.Name)"
+          $releaseExecutables = Get-ChildItem -LiteralPath artifacts -Filter 'Turbo-Browser-*-win-x64.exe'
+          if ($releaseExecutables.Count -eq 0) { throw 'The portable Windows executable was not produced.' }
+          $releaseChecksums = foreach ($releaseExecutable in $releaseExecutables) {
+            $releaseHash = Get-FileHash -LiteralPath $releaseExecutable.FullName -Algorithm SHA256
+            "$($releaseHash.Hash.ToLowerInvariant())  $($releaseExecutable.Name)"
           }
           $releaseChecksums | Set-Content -LiteralPath artifacts/SHA256SUMS.txt -Encoding ascii
       - name: Retain release files
@@ -58,7 +58,7 @@ jobs:
         with:
           name: Turbo-Browser-release
           path: |
-            artifacts/Turbo-Browser-*-win-x64.zip
+            artifacts/Turbo-Browser-*-win-x64.exe
             artifacts/SHA256SUMS.txt
           if-no-files-found: error
       - name: Publish GitHub release
@@ -69,9 +69,11 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            artifacts/Turbo-Browser-*-win-x64.zip
+            artifacts/Turbo-Browser-*-win-x64.exe
             artifacts/SHA256SUMS.txt
           body: |
-            Extract the entire Windows x64 ZIP and run Turbo Browser.exe.
-            This initial build is unsigned and does not include an automatic updater.
-            SHA256SUMS.txt contains the checksum for the downloadable archive.
+            Download Turbo-Browser-0.2.0-win-x64.exe and open it to launch Turbo's own Chromium browser.
+            No ZIP extraction, setup wizard, or administrator installation is required.
+            The download page cannot run software automatically; you open the downloaded file yourself.
+            This build is unsigned and does not include an automatic updater.
+            SHA256SUMS.txt contains the checksum for the portable executable.

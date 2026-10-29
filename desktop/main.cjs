@@ -6,7 +6,7 @@ const path = require('node:path');
 const os = require('node:os');
 const { pathToFileURL } = require('node:url');
 const { randomUUID } = require('node:crypto');
-const { NEW_TAB, safeWebURL, normalizeAddress, sanitizeSettings, sanitizeStore, isTrustedIPC } = require('./core.cjs');
+const { NEW_TAB, safeWebURL, normalizeAddress, sanitizeSettings, sanitizeStore, isTrustedIPC, startupURLs } = require('./core.cjs');
 
 const smokeMode = process.argv.includes('--smoke-test');
 if (process.env.TURBO_PROFILE_DIR && path.isAbsolute(process.env.TURBO_PROFILE_DIR)) app.setPath('userData', process.env.TURBO_PROFILE_DIR);
@@ -78,7 +78,7 @@ function state() {
     bookmarks: store.bookmarks, history: store.history,
     downloads: downloads.map(({ item, private: isPrivate, ...download }) => download),
     settings: store.settings,
-    versions: { electron: process.versions.electron, chromium: process.versions.chrome },
+    versions: { app: app.getVersion(), electron: process.versions.electron, chromium: process.versions.chrome },
     isMaximized: Boolean(win && !win.isDestroyed() && win.isMaximized()),
     storageError, findResult, overlayOpen
   };
@@ -467,10 +467,7 @@ async function createWindow() {
   win.on('closed', () => { win = null; });
   win.once('ready-to-show', () => { if (win && !win.isDestroyed()) win.show(); });
   await win.loadFile(path.join(__dirname, 'shell.html'));
-  const restored = store.settings.restoreSession ? store.tabs : [];
-  if (restored.length && !smokeMode) {
-    for (const entry of restored) createTab(entry.url, false, tabs.length > 0);
-  } else createTab();
+  for (const url of startupURLs(store, smokeMode)) createTab(url, false, tabs.length > 0);
   broadcast();
 }
 

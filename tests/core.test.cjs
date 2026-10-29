@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { NEW_TAB, safeWebURL, normalizeAddress, sanitizeStore, sanitizeSettings, isTrustedIPC } = require('../desktop/core.cjs');
+const { NEW_TAB, safeWebURL, normalizeAddress, sanitizeStore, sanitizeSettings, isTrustedIPC, startupURLs } = require('../desktop/core.cjs');
 
 test('addresses load as URLs while phrases use the chosen search engine', () => {
   assert.equal(normalizeAddress('example.com/path?q=a#b'), 'https://example.com/path?q=a#b');
@@ -51,4 +51,18 @@ test('only the exact trusted shell main frame receives privileged browser IPC', 
   assert.equal(isTrustedIPC({sender:trusted,senderFrame:{url:mainFrame.url}},trusted,mainFrame.url),false);
   assert.equal(isTrustedIPC({sender:trusted,senderFrame:mainFrame},trusted,'https://evil.example'),false);
   assert.equal(isTrustedIPC({sender:trusted,senderFrame:mainFrame},{...trusted,isDestroyed:()=>true},mainFrame.url),false);
+});
+
+test('fresh startup opens the web, preserves regular sessions, and keeps smoke startup isolated', () => {
+  assert.deepEqual(startupURLs(null), ['https://duckduckgo.com/']);
+  assert.deepEqual(startupURLs({tabs: []}), ['https://duckduckgo.com/']);
+  const saved = {
+    settings: {restoreSession: true},
+    tabs: [{url:'https://example.com/a'},{url:NEW_TAB},{url:'https://private.example/',private:true},{url:'file:///secret'}]
+  };
+  assert.deepEqual(startupURLs(saved), ['https://example.com/a', NEW_TAB]);
+  assert.deepEqual(startupURLs({...saved,settings:{restoreSession:false}}), ['https://duckduckgo.com/']);
+  assert.deepEqual(startupURLs({tabs:[{url:'https://private.example/',private:true},{url:'javascript:evil'}]}), ['https://duckduckgo.com/']);
+  assert.deepEqual(startupURLs(saved, true), [NEW_TAB]);
+  assert.deepEqual(startupURLs(null, true), [NEW_TAB]);
 });

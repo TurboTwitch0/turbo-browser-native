@@ -1,6 +1,7 @@
 'use strict';
 
 const NEW_TAB = 'turbo://newtab';
+const START_PAGE = 'https://duckduckgo.com/';
 const ENGINES = Object.freeze({
   duckduckgo: 'https://duckduckgo.com/?q=',
   google: 'https://www.google.com/search?q=',
@@ -77,4 +78,11 @@ function isTrustedIPC(event, shellContents, shellURL) {
     event.senderFrame && event.senderFrame === shellContents.mainFrame && event.senderFrame.url === shellURL);
 }
 
-module.exports = { NEW_TAB, ENGINES, DEFAULT_SETTINGS, safeWebURL, normalizeAddress, sanitizeSettings, sanitizeStore, isTrustedIPC };
+function startupURLs(value, testing = false) {
+  if (testing) return [NEW_TAB];
+  const profile = sanitizeStore(value);
+  if (profile.settings.restoreSession && profile.tabs.length) return profile.tabs.map(tab => tab.url);
+  return [START_PAGE];
+}
+
+module.exports = { NEW_TAB, START_PAGE, ENGINES, DEFAULT_SETTINGS, safeWebURL, normalizeAddress, sanitizeSettings, sanitizeStore, isTrustedIPC, startupURLs };
