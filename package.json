@@ -1,7 +1,7 @@
 {
   "name": "turbo-browser-native",
-  "productName": "Turbo Browser",
-  "version": "0.2.0",
+  "productName": "TurboBrowser",
+  "version": "0.3.0",
   "description": "A desktop browser with its own Chromium-powered tabs, navigation, bookmarks and private browsing.",
   "main": "desktop/main.cjs",
   "author": "Turbo Browser contributors",
@@ -10,20 +10,25 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test tests/*.test.cjs",
-    "check": "node --check desktop/main.cjs && node --check desktop/preload.cjs && node --check desktop/core.cjs && node --check desktop/shell.js",
+    "check": "node --check desktop/main.cjs && node --check desktop/preload.cjs && node --check desktop/core.cjs && node --check desktop/profile.cjs && node --check desktop/tor.cjs && node --check scripts/prepare-tor.mjs && node --check desktop/shell.js",
     "smoke": "node scripts/smoke.mjs",
-    "build:win": "electron-builder --win portable --x64 --publish never",
+    "prepare:tor": "node scripts/prepare-tor.mjs",
+    "prebuild:win": "node scripts/prepare-tor.mjs",
+    "build:win": "electron-builder --win nsis --x64 --publish never",
+    "prebuild:dir": "node scripts/prepare-tor.mjs",
     "build:dir": "electron-builder --win --x64 --dir --publish never"
   },
   "devDependencies": {"electron": "45.1.0", "electron-builder": "26.18.0"},
   "build": {
     "appId": "app.turbobrowser.desktop",
-    "productName": "Turbo Browser",
+    "productName": "TurboBrowser",
     "asar": true,
+    "compression": "normal",
     "directories": {"output": "artifacts"},
     "files": ["desktop/**/*", "package.json", "LICENSE"],
-    "win": {"target": [{"target": "portable", "arch": ["x64"]}], "icon": "desktop/assets/icon.ico", "artifactName": "Turbo-Browser-${version}-win-${arch}.${ext}", "signExecutable": false},
-    "portable": {"requestExecutionLevel": "user", "splashImage": null},
+    "extraResources": [{"from": ".vendor/tor", "to": "tor", "filter": ["**/*"]}],
+    "win": {"target": [{"target": "nsis", "arch": ["x64"]}], "icon": "desktop/assets/icon.ico", "artifactName": "TurboBrowser.${ext}", "signExecutable": false},
+    "nsis": {"artifactName": "TurboBrowser.${ext}", "oneClick": true, "perMachine": false, "allowElevation": false, "runAfterFinish": true, "createDesktopShortcut": true, "createStartMenuShortcut": true, "shortcutName": "TurboBrowser", "uninstallDisplayName": "TurboBrowser"},
     "mac": {"target": "dmg", "category": "public.app-category.productivity"},
     "linux": {"target": "AppImage", "category": "Network"}
   }

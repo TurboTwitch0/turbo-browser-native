@@ -5,7 +5,8 @@ const actions = new Set([
   'get-state', 'new-tab', 'navigate', 'switch-tab', 'close-tab', 'back', 'forward',
   'reload', 'stop', 'home', 'bookmark', 'remove-bookmark', 'clear-history', 'settings',
   'set-overlay', 'open-download', 'clear-downloads', 'zoom-in', 'zoom-out', 'zoom-reset',
-  'find', 'stop-find', 'minimize', 'maximize', 'close-window', 'reopen-tab', 'focus-page'
+  'find', 'stop-find', 'minimize', 'maximize', 'close-window', 'reopen-tab', 'focus-page',
+  'mute-tab', 'duplicate-tab', 'tab-menu'
 ]);
 
 function subscribe(channel, callback) {

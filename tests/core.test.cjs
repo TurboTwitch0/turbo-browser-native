@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { NEW_TAB, safeWebURL, normalizeAddress, sanitizeStore, sanitizeSettings, isTrustedIPC, startupURLs } = require('../desktop/core.cjs');
+const { NEW_TAB, safeWebURL, normalizeAddress, sanitizeStore, sanitizeSettings, isTrustedIPC, startupURLs, rasterDataURL, configureTorProxy } = require('../desktop/core.cjs');
 
 test('addresses load as URLs while phrases use the chosen search engine', () => {
   assert.equal(normalizeAddress('example.com/path?q=a#b'), 'https://example.com/path?q=a#b');
@@ -54,15 +54,43 @@ test('only the exact trusted shell main frame receives privileged browser IPC', 
 });
 
 test('fresh startup opens the web, preserves regular sessions, and keeps smoke startup isolated', () => {
-  assert.deepEqual(startupURLs(null), ['https://duckduckgo.com/']);
-  assert.deepEqual(startupURLs({tabs: []}), ['https://duckduckgo.com/']);
+  assert.deepEqual(startupURLs(null), ['https://start.duckduckgo.com/']);
+  assert.deepEqual(startupURLs({tabs: []}), ['https://start.duckduckgo.com/']);
   const saved = {
     settings: {restoreSession: true},
     tabs: [{url:'https://example.com/a'},{url:NEW_TAB},{url:'https://private.example/',private:true},{url:'file:///secret'}]
   };
   assert.deepEqual(startupURLs(saved), ['https://example.com/a', NEW_TAB]);
-  assert.deepEqual(startupURLs({...saved,settings:{restoreSession:false}}), ['https://duckduckgo.com/']);
-  assert.deepEqual(startupURLs({tabs:[{url:'https://private.example/',private:true},{url:'javascript:evil'}]}), ['https://duckduckgo.com/']);
+  assert.deepEqual(startupURLs({...saved,settings:{restoreSession:false}}), ['https://start.duckduckgo.com/']);
+  assert.deepEqual(startupURLs({tabs:[{url:'https://private.example/',private:true},{url:'javascript:evil'}]}), ['https://start.duckduckgo.com/']);
   assert.deepEqual(startupURLs(saved, true), [NEW_TAB]);
   assert.deepEqual(startupURLs(null, true), [NEW_TAB]);
+});
+
+test('favicon bridge only emits bounded raster data with matching image signatures', () => {
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aC9sAAAAASUVORK5CYII=', 'base64');
+  assert.equal(rasterDataURL(png, 'image/png; charset=binary'), `data:image/png;base64,${png.toString('base64')}`);
+  assert.equal(rasterDataURL(png, 'text/html'), '');
+  assert.equal(rasterDataURL(Buffer.from('<svg onload="alert(1)"/>'), 'image/svg+xml'), '');
+  assert.equal(rasterDataURL(Buffer.from('<html>payload</html>'), 'image/png'), '');
+  assert.equal(rasterDataURL(Buffer.alloc(65537), 'image/png'), '');
+  assert.equal(rasterDataURL(null, 'image/png'), '');
+});
+
+test('Tor session setup uses one SOCKS5 endpoint with no direct or implicit loopback bypass', async () => {
+  const calls = [];
+  const browsingSession = {
+    async setProxy(config) { calls.push(['proxy',config]); },
+    async closeAllConnections() { calls.push(['close']); },
+    setSpellCheckerEnabled(enabled) { calls.push(['spellcheck',enabled]); }
+  };
+  await configureTorProxy(browsingSession, 9050);
+  assert.deepEqual(calls, [
+    ['proxy',{mode:'fixed_servers',proxyRules:'socks5://127.0.0.1:9050',proxyBypassRules:'<-loopback>'}],
+    ['close'],['spellcheck',false]
+  ]);
+  for (const port of [0,-1,65536,'9050;DIRECT',NaN]) await assert.rejects(configureTorProxy(browsingSession,port));
+  let advanced = false;
+  await assert.rejects(configureTorProxy({async setProxy(){throw new Error('proxy failed');},async closeAllConnections(){advanced=true;}},9050));
+  assert.equal(advanced,false);
 });

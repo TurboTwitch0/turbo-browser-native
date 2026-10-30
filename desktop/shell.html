@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Turbo Browser</title>
+  <title>TurboBrowser</title>
   <link rel="stylesheet" href="shell.css">
 </head>
 <body>
   <header class="chrome">
     <div class="tabbar">
-      <img src="icon.svg" class="app-icon" alt="Turbo Browser">
+      <img src="icon.svg" class="app-icon" alt="TurboBrowser">
       <div id="tabs" role="tablist" aria-label="Browser tabs"></div>
       <button id="new-tab" class="icon-button add-tab" title="New tab (Ctrl+T)" aria-label="New tab">+</button>
-      <div class="drag-space"></div>
+      <div class="drag-space"><span id="private-notice" class="private-notice" hidden><strong id="private-notice-title">Device private</strong><span id="private-notice-detail">Websites &amp; network still see traffic</span></span></div>
       <div class="window-controls">
         <button id="minimize" aria-label="Minimize">−</button>
         <button id="maximize" aria-label="Maximize">□</button>
@@ -28,7 +28,7 @@
       <form id="address-form" class="address-wrap">
         <span id="site-info" title="New tab" aria-label="Connection information">✦</span>
         <input id="address" aria-label="Search or enter website address" autocomplete="off" spellcheck="false" placeholder="Search or enter an address">
-        <span id="private-label" hidden>PRIVATE</span>
+        <span id="private-label" title="Temporary session. History stays off this device; websites and your network can still see activity." hidden>DEVICE PRIVATE</span>
         <button type="button" id="bookmark" class="icon-button" title="Bookmark this page (Ctrl+D)" aria-label="Bookmark this page">☆</button>
       </form>
       <button id="downloads-button" class="icon-button" title="Downloads (Ctrl+J)" aria-label="Downloads">↓</button>
@@ -41,7 +41,7 @@
   <main id="newtab" class="newtab">
     <div class="topline"><span><i class="status-dot"></i> YOUR SPACE ON THE WEB</span><time id="clock"></time></div>
     <div class="newtab-content">
-      <div class="wordmark"><img src="icon.svg" alt=""><span>turbo<span class="wordmark-dot">.</span></span></div>
+      <div class="wordmark"><img src="icon.svg" alt=""><span>TurboBrowser<span class="wordmark-dot">.</span></span></div>
       <p class="eyebrow" id="greeting">A LITTLE CURIOSITY GOES A LONG WAY</p>
       <h1 id="welcome">Where to next<span>?</span></h1>
       <p class="intro" id="intro">One address. A whole world to explore.</p>
@@ -66,8 +66,9 @@
   <section id="overlay" class="overlay" hidden aria-label="Browser panel">
     <aside class="panel-nav"><div class="panel-brand"><img src="icon.svg" alt=""> Your browser.</div>
       <button data-panel="bookmarks">☆ &nbsp; Bookmarks</button><button data-panel="history">↶ &nbsp; History</button><button data-panel="downloads">↓ &nbsp; Downloads</button><button data-panel="settings">⚙ &nbsp; Settings</button>
-      <button id="private-tab" class="private-action">◈ &nbsp; New private tab <kbd>Ctrl Shift N</kbd></button>
-      <p class="panel-version">Turbo Browser <span id="app-version">0.2.0</span></p>
+      <button id="private-tab" class="private-action">◈ &nbsp; Device-private tab <kbd>Ctrl Shift N</kbd></button>
+      <button id="tor-private-tab" class="tor-action" title="Route this tab through Tor. Your network can still see Tor in use; this is not the full Tor Browser.">◎ &nbsp; Tor private tab</button>
+      <p class="panel-version">TurboBrowser <span id="app-version">0.3.0</span></p>
     </aside>
     <div class="panel-main"><div class="panel-top"><span id="panel-eyebrow" class="eyebrow">YOUR COLLECTION</span><button id="close-panel" class="icon-button" aria-label="Close panel">×</button></div><h1 id="panel-title">Bookmarks</h1><p id="panel-description"></p><input id="panel-search" type="search" placeholder="Filter your bookmarks" aria-label="Filter panel items"><div id="panel-content"></div></div>
   </section>

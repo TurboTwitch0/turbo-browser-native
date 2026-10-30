@@ -1,7 +1,7 @@
 'use strict';
 
 const NEW_TAB = 'turbo://newtab';
-const START_PAGE = 'https://duckduckgo.com/';
+const START_PAGE = 'https://start.duckduckgo.com/';
 const ENGINES = Object.freeze({
   duckduckgo: 'https://duckduckgo.com/?q=',
   google: 'https://www.google.com/search?q=',
@@ -85,4 +85,23 @@ function startupURLs(value, testing = false) {
   return [START_PAGE];
 }
 
-module.exports = { NEW_TAB, START_PAGE, ENGINES, DEFAULT_SETTINGS, safeWebURL, normalizeAddress, sanitizeSettings, sanitizeStore, isTrustedIPC, startupURLs };
+function rasterDataURL(bytes, contentType) {
+  if (!Buffer.isBuffer(bytes) || !bytes.length || bytes.length > 65536 || typeof contentType !== 'string') return '';
+  const mime = contentType.split(';')[0].trim().toLowerCase();
+  const signature = {
+    'image/png': () => bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])),
+    'image/jpeg': () => bytes.length >= 3 && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255,
+    'image/gif': () => bytes.length >= 6 && ['GIF87a','GIF89a'].includes(bytes.subarray(0,6).toString('ascii')),
+    'image/webp': () => bytes.length >= 12 && bytes.subarray(0,4).toString('ascii') === 'RIFF' && bytes.subarray(8,12).toString('ascii') === 'WEBP'
+  };
+  return Object.hasOwn(signature, mime) && signature[mime]() ? `data:${mime};base64,${bytes.toString('base64')}` : '';
+}
+
+async function configureTorProxy(browsingSession, port) {
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Tor returned an invalid proxy port.');
+  await browsingSession.setProxy({ mode: 'fixed_servers', proxyRules: `socks5://127.0.0.1:${port}`, proxyBypassRules: '<-loopback>' });
+  await browsingSession.closeAllConnections();
+  browsingSession.setSpellCheckerEnabled(false);
+}
+
+module.exports = { NEW_TAB, START_PAGE, ENGINES, DEFAULT_SETTINGS, safeWebURL, normalizeAddress, sanitizeSettings, sanitizeStore, isTrustedIPC, startupURLs, rasterDataURL, configureTorProxy };

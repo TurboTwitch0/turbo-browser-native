@@ -25,15 +25,15 @@ jobs:
         run: npm run check
       - name: Test browser core
         run: npm test
-      - name: Exercise the embedded Chromium browser
+      - name: Smoke-test the source app with embedded Chromium
         run: npm run smoke
-      - name: Package single-file Windows browser
+      - name: Package the per-user Windows installer
         run: npm run build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - name: Retain Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: Turbo-Browser-windows-x64
-          path: artifacts/Turbo-Browser-*-win-x64.exe
+          name: TurboBrowser-windows-x64
+          path: artifacts/TurboBrowser.exe
           if-no-files-found: error

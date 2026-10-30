@@ -2,6 +2,7 @@ name: Release Windows browser
 
 on:
   push:
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 
@@ -10,7 +11,7 @@ permissions:
 
 jobs:
   release:
-    if: github.event_name == 'push' || github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Release TurboBrowser ')))
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
@@ -27,7 +28,7 @@ jobs:
         run: |
           $releaseVersion = node -p "require('./package.json').version"
           $releaseTag = "v$releaseVersion"
-          if ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:GITHUB_REF_NAME -ne $releaseTag) {
+          if ($env:GITHUB_REF.StartsWith('refs/tags/') -and $env:GITHUB_REF_NAME -ne $releaseTag) {
             throw 'The pushed release tag must match package.json.'
           }
           "tag=$releaseTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -37,28 +38,24 @@ jobs:
         run: npm run check
       - name: Test browser core
         run: npm test
-      - name: Exercise the embedded Chromium browser
+      - name: Smoke-test the source app with embedded Chromium
         run: npm run smoke
-      - name: Package single-file Windows browser
+      - name: Package the per-user Windows installer
         run: npm run build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - name: Write SHA-256 checksums
         shell: pwsh
         run: |
-          $releaseExecutables = Get-ChildItem -LiteralPath artifacts -Filter 'Turbo-Browser-*-win-x64.exe'
-          if ($releaseExecutables.Count -eq 0) { throw 'The portable Windows executable was not produced.' }
-          $releaseChecksums = foreach ($releaseExecutable in $releaseExecutables) {
-            $releaseHash = Get-FileHash -LiteralPath $releaseExecutable.FullName -Algorithm SHA256
-            "$($releaseHash.Hash.ToLowerInvariant())  $($releaseExecutable.Name)"
-          }
-          $releaseChecksums | Set-Content -LiteralPath artifacts/SHA256SUMS.txt -Encoding ascii
+          $releaseInstaller = Get-Item -LiteralPath artifacts/TurboBrowser.exe
+          $releaseHash = Get-FileHash -LiteralPath $releaseInstaller.FullName -Algorithm SHA256
+          "$($releaseHash.Hash.ToLowerInvariant())  TurboBrowser.exe" | Set-Content -LiteralPath artifacts/SHA256SUMS.txt -Encoding ascii
       - name: Retain release files
         uses: actions/upload-artifact@v4
         with:
-          name: Turbo-Browser-release
+          name: TurboBrowser-release
           path: |
-            artifacts/Turbo-Browser-*-win-x64.exe
+            artifacts/TurboBrowser.exe
             artifacts/SHA256SUMS.txt
           if-no-files-found: error
       - name: Publish GitHub release
@@ -69,11 +66,15 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            artifacts/Turbo-Browser-*-win-x64.exe
+            artifacts/TurboBrowser.exe
             artifacts/SHA256SUMS.txt
           body: |
-            Download Turbo-Browser-0.2.0-win-x64.exe and open it to launch Turbo's own Chromium browser.
-            No ZIP extraction, setup wizard, or administrator installation is required.
+            Download TurboBrowser.exe and open it once to install for your Windows user. The browser opens when installation finishes.
+            After that, launch TurboBrowser from its desktop or Start menu shortcut. The installed app avoids unpacking a portable bundle on every launch.
+            No ZIP extraction, multi-step setup wizard, or administrator installation is required.
             The download page cannot run software automatically; you open the downloaded file yourself.
             This build is unsigned and does not include an automatic updater.
-            SHA256SUMS.txt contains the checksum for the portable executable.
+            SHA256SUMS.txt contains the checksum for TurboBrowser.exe.
+            Optional Tor private tabs use the bundled Tor network client; regular and ordinary private tabs connect directly.
+            Tor can be slower, your network can see Tor use, and this Chromium app does not provide Tor Browser's full anonymity protections.
+            Automated smoke tests exercise the source application; they do not run the packaged installer.
