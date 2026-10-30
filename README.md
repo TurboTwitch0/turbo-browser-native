@@ -81,6 +81,8 @@ The packaged executable is `artifacts/win-unpacked/Turbo Browser.exe`. Windows i
 
 Bookmarks, history, preferences, and the regular tab list are stored locally in the app's Electron user-data directory; website sessions store their own cookies and cache in the browser profile. Search queries go to the selected search provider, and websites receive normal browser requests. There is no project-hosted browsing proxy or account-sync backend.
 
+If `browser.json` is damaged, Turbo Browser verifies an exact recovery copy beside it before saving a fresh profile. The recovery filename remains visible in Settings. Profiles that cannot be read, are not regular files, or are 4 MiB or larger are preserved without replacement; changes then last only for the current session. Close the browser before repairing or restoring a profile. Keep the recovery file until you have recovered any bookmarks or history you need.
+
 For automated checks, set `TURBO_PROFILE_DIR` to an isolated absolute directory. This is intended for development and testing.
 
 ## Releases
