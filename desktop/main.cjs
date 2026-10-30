@@ -7,6 +7,7 @@ const os = require('node:os');
 const { pathToFileURL } = require('node:url');
 const { randomUUID } = require('node:crypto');
 const { NEW_TAB, safeWebURL, normalizeAddress, sanitizeSettings, sanitizeStore, isTrustedIPC, startupURLs } = require('./core.cjs');
+const { createProfileRepository } = require('./profile.cjs');
 
 const smokeMode = process.argv.includes('--smoke-test');
 if (process.env.TURBO_PROFILE_DIR && path.isAbsolute(process.env.TURBO_PROFILE_DIR)) app.setPath('userData', process.env.TURBO_PROFILE_DIR);
@@ -16,6 +17,7 @@ app.enableSandbox();
 
 const shellURL = pathToFileURL(path.join(__dirname, 'shell.html')).href;
 const profilePath = path.join(app.getPath('userData'), 'browser.json');
+const profileRepository = createProfileRepository(profilePath);
 const tabs = [];
 const recentlyClosed = [];
 const downloads = [];
@@ -31,11 +33,9 @@ let findResult = null;
 let privatePartition = `private-${randomUUID()}`;
 
 function loadProfile() {
-  try {
-    if (fs.existsSync(profilePath) && fs.statSync(profilePath).size < 4 * 1024 * 1024) {
-      store = sanitizeStore(JSON.parse(fs.readFileSync(profilePath, 'utf8')));
-    }
-  } catch { storageError = 'Your saved profile could not be read. This session starts with the default settings.'; }
+  const loaded = profileRepository.load();
+  store = loaded.store;
+  storageError = loaded.message;
 }
 
 function persist() {
@@ -46,13 +46,8 @@ function persist() {
     history: store.history,
     tabs: store.settings.restoreSession ? tabs.filter(tab => !tab.private).map(tab => ({ url: tab.url })) : []
   };
-  try {
-    fs.mkdirSync(path.dirname(profilePath), { recursive: true });
-    const temporary = `${profilePath}.tmp`;
-    fs.writeFileSync(temporary, JSON.stringify(snapshot), { mode: 0o600 });
-    fs.renameSync(temporary, profilePath);
-    storageError = '';
-  } catch { storageError = 'Changes could not be saved to your browser profile. They will last for this session.'; }
+  storageError = profileRepository.save(snapshot).message;
+  broadcast();
 }
 
 function schedulePersist() {

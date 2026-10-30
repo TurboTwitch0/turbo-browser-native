@@ -5,6 +5,7 @@ let state = {tabs: [], bookmarks: [], history: [], downloads: [], settings: {sea
 let panel = null;
 let toastTimer;
 let panelSnapshot = '';
+let lastStorageMessage = '';
 const shortcuts = [
   ['Wikipedia','https://wikipedia.org','W'], ['YouTube','https://youtube.com','▶'],
   ['GitHub','https://github.com','⌘'], ['Reddit','https://reddit.com','r'],
@@ -66,8 +67,9 @@ function render(next) {
   if(!bookmarks.length) {const hint=el('p','bookmark-hint','Good finds belong here. Press ');hint.append(el('kbd','','Ctrl D'),document.createTextNode(' to save a page.'));bookmarks.push(hint);}
   $('home-bookmarks').replaceChildren(...bookmarks);
   if(state.findResult) $('find-count').textContent=state.findResult.matches?state.findResult.activeMatchOrdinal+'/'+state.findResult.matches:'0 matches';
-  if(panel) {const snapshot=JSON.stringify([panel,state[panel],state.settings]);if(snapshot!==panelSnapshot){panelSnapshot=snapshot;renderPanel();}}
-  if(state.storageError) notify('Your changes could not be saved: '+state.storageError);
+  if(panel) {const snapshot=JSON.stringify([panel,state[panel],state.settings,state.storageError]);if(snapshot!==panelSnapshot){panelSnapshot=snapshot;renderPanel();}}
+  if(state.storageError && state.storageError!==lastStorageMessage) notify(state.storageError);
+  lastStorageMessage=state.storageError||'';
 }
 
 async function navigate(value) {
@@ -121,6 +123,7 @@ function renderPanel() {
 }
 function formatBytes(value){if(!value) return '0 B';const unit=Math.min(3,Math.floor(Math.log(value)/Math.log(1024)));return (value/1024**unit).toFixed(unit?1:0)+' '+['B','KB','MB','GB'][unit];}
 function renderSettings(content) {
+  if(state.storageError) { const warning=el('p','profile-warning',state.storageError);warning.setAttribute('role','status');content.append(warning); }
   const setting=(name,description,control)=>{const row=el('div','setting-row');const text=el('div');const label=el('label','',name);label.htmlFor=control.id;text.append(label,el('p','',description));row.append(text,control);content.append(row);};
   const theme=el('select');theme.id='theme-setting'; for(const [value,title] of [['dark','Forest dark'],['light','Daylight']]){const option=el('option','',title);option.value=value;theme.append(option);}theme.value=state.settings.theme;theme.addEventListener('change',()=>command('settings',{theme:theme.value}));setting('Appearance','Set the tone for your browser.',theme);
   const engine=$('engine').cloneNode(true);engine.id='engine-setting';engine.value=state.settings.searchEngine;engine.addEventListener('change',()=>command('settings',{searchEngine:engine.value}));setting('Search engine','Used when you type a search in the address bar.',engine);
